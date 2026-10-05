@@ -94,7 +94,7 @@ battery, choosing safe currents, and not leaving charging unattended.
 
 MIT License — Copyright (c) 2026 Andreev Ivan.
 
-See [LICENSE](LICENSE) for full text.
+See [LICENSE](https://github.com/Arlequin-AI/pyskyrc/blob/main/LICENSE) for full text.
 
 ## Author
 

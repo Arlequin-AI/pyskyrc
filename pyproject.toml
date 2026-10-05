@@ -4,11 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyskyrc"
-version = "0.2.1"
+version = "0.2.2"
 description = "Pure-Python control and telemetry for SkyRC Q200neo / T1000 chargers via USB HID and BLE"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Andreev Ivan" }]
 keywords = [
     "skyrc", "charger", "lipo", "lilon", "lifepo4",

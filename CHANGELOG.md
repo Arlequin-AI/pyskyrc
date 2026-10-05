@@ -2,6 +2,12 @@
 
 All notable changes to `pyskyrc` are documented here.
 
+## [0.2.2] — 2026-10-05
+
+### Fixed
+- pyproject.toml: use PEP 639 SPDX license expression (`license = "MIT"`, `license-files = ["LICENSE"]`).
+- README: absolute GitHub URL for full license text (relative links don't work on PyPI).
+
 ## [0.2.1] — 2026-10-05
 
 ### Changed
