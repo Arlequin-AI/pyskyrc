@@ -2,6 +2,11 @@
 
 All notable changes to `pyskyrc` are documented here.
 
+## [0.2.1] — 2026-10-05
+
+### Changed
+- README: mention copyright and clickable license link.
+
 ## [0.2.0] — 2026-10-05
 
 ### Added
