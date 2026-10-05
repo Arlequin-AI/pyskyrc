@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling>=1.20"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyskyrc"
+version = "0.2.0"
+description = "Pure-Python control and telemetry for SkyRC Q200neo / T1000 chargers via USB HID and BLE"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Andreev Ivan" }]
+keywords = [
+    "skyrc", "charger", "lipo", "lilon", "lifepo4",
+    "battery", "hid", "ble", "q200neo", "t1000",
+    "telemetry", "charging",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+ble  = ["bleak>=0.20"]
+dev  = ["pytest>=7", "pytest-cov", "ruff>=0.4", "mypy>=1.8", "build", "twine"]
+
+[project.scripts]
+pyskyrc = "pyskyrc.cli:main"
+
+[project.urls]
+Homepage      = "https://github.com/yourname/pyskyrc"
+Source        = "https://github.com/yourname/pyskyrc"
+Issues        = "https://github.com/yourname/pyskyrc/issues"
+Documentation = "https://github.com/yourname/pyskyrc/blob/main/docs/protocol.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pyskyrc"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "pyskyrc",
+    "tests",
+    "examples",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=pyskyrc --cov-report=term-missing"
