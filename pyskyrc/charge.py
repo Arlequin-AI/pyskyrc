@@ -13,8 +13,6 @@ import time
 
 from . import protocol, telemetry
 from .enums import Port
-from .exceptions import NoAckError
-
 
 log = logging.getLogger(__name__)
 

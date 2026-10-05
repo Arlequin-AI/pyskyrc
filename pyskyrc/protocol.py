@@ -17,11 +17,9 @@ SkyRC Q200neo / T1000 HID protocol.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import IntEnum
 from typing import Final
 
 from .enums import Chemistry, CycleDirection, Port
-
 
 REPORT_SIZE: Final = 64
 DEFAULT_TRICKLE_MA: Final = 49

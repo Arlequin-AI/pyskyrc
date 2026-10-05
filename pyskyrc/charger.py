@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from . import protocol, telemetry
-from .device import HIDDevice, DEFAULT_PATH
+from .device import DEFAULT_PATH, HIDDevice
+from .enums import Chemistry, CycleDirection, Port
+from .exceptions import InvalidParameterError
 from .transport_ble import BLEDevice
-from .enums import Chemistry, CycleDirection, Port, State
-from .exceptions import InvalidParameterError, SkyRCError
 
 log = logging.getLogger(__name__)
 
@@ -87,14 +87,14 @@ class SkyRCCharger:
 
     # ---- lifecycle ----
 
-    def open(self) -> "SkyRCCharger":
+    def open(self) -> SkyRCCharger:
         self._device.open()
         return self
 
     def close(self) -> None:
         self._device.close()
 
-    def __enter__(self) -> "SkyRCCharger":
+    def __enter__(self) -> SkyRCCharger:
         return self.open()
 
     def __exit__(self, *args: object) -> None:

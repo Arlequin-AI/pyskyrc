@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import subprocess
 from dataclasses import dataclass
 
 try:
@@ -80,7 +81,7 @@ async def scan_chargers(
 
 def scan_chargers_sync(**kwargs) -> list[ChargerCandidate]:
     return asyncio.run(scan_chargers(**kwargs))
-import subprocess
+
 
 
 def list_paired_devices() -> list[tuple[str, str]]:

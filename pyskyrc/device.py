@@ -13,7 +13,6 @@ import time
 
 from .exceptions import DeviceIOError, DeviceNotFoundError
 
-
 REPORT_SIZE = 64
 DEFAULT_PATH = "/dev/hidraw4"
 
@@ -61,7 +60,7 @@ class HIDDevice:
             pass
         self._fd = None
 
-    def __enter__(self) -> "HIDDevice":
+    def __enter__(self) -> HIDDevice:
         self.open()
         return self
 

@@ -27,7 +27,6 @@ from enum import Enum
 
 from .enums import Port, State
 
-
 MAX_CELL_SPREAD_MV = 200
 MIN_CELL_MV        = 2500
 MAX_CELL_MV        = 4500

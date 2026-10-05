@@ -11,7 +11,6 @@ import queue
 import threading
 import time
 from pathlib import Path
-from typing import Optional
 
 try:
     from bleak import BleakClient, BleakScanner
@@ -21,8 +20,7 @@ except ImportError as exc:
 else:
     _BLEAK_IMPORT_ERROR = None
 
-from .exceptions import DeviceNotFoundError, DeviceIOError
-
+from .exceptions import DeviceIOError, DeviceNotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -76,13 +74,13 @@ class BLEDevice:
         self.debug = False
         self.mac_bytes: bytes | None = None
 
-        self._client: Optional[BleakClient] = None
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._thread: Optional[threading.Thread] = None
-        self._rx: "queue.Queue[bytes]" = queue.Queue()
+        self._client: BleakClient | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._thread: threading.Thread | None = None
+        self._rx: queue.Queue[bytes] = queue.Queue()
         self._ready = threading.Event()
         self._stop = threading.Event()
-        self._error: Optional[BaseException] = None
+        self._error: BaseException | None = None
 
     # ---- lifecycle ----
 
@@ -108,7 +106,7 @@ class BLEDevice:
         if self._thread is not None:
             self._thread.join(timeout=5.0)
 
-    def __enter__(self) -> "BLEDevice":
+    def __enter__(self) -> BLEDevice:
         self.open()
         return self
 
@@ -131,7 +129,7 @@ class BLEDevice:
         fut.result(timeout=2.0)
         return len(packet)
 
-    def read(self, timeout: float = 0.05) -> Optional[bytes]:
+    def read(self, timeout: float = 0.05) -> bytes | None:
         try:
             return self._rx.get(timeout=timeout)
         except queue.Empty:
@@ -162,7 +160,7 @@ class BLEDevice:
         asyncio.set_event_loop(self._loop)
         try:
             self._loop.run_until_complete(self._main())
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             self._error = exc
             self._ready.set()
         finally:

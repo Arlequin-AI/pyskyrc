@@ -88,3 +88,6 @@ battery, choosing safe currents, and not leaving charging unattended.
 ## License
 
 MIT — see LICENSE.
+## Author
+
+Andreev Ivan — 2026

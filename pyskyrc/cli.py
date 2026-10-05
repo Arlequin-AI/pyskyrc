@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-import time
 
 from . import __version__, protocol
 from .charger import ChargeParameters, SkyRCCharger
@@ -180,7 +179,7 @@ def cmd_shell(args: argparse.Namespace) -> int:
 
 
 def _shell_loop(charger: SkyRCCharger, args: argparse.Namespace) -> None:
-    from .enums import Chemistry, Port
+    from .enums import Port
 
     print(f"[{args.transport.upper()}] connected")
     print("type 'help' for commands, 'exit' to quit\n")

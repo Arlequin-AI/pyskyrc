@@ -2,7 +2,11 @@
 
 from pyskyrc import protocol
 from pyskyrc.enums import (
-    Chemistry, CycleDirection, LiMode, NiMode, PbMode, Port,
+    Chemistry,
+    CycleDirection,
+    LiMode,
+    NiMode,
+    Port,
 )
 
 
