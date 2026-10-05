@@ -1,6 +1,6 @@
 [![PyPI](https://img.shields.io/pypi/v/pyskyrc.svg)](https://pypi.org/project/pyskyrc/)
 [![Python](https://img.shields.io/pypi/pyversions/pyskyrc.svg)](https://pypi.org/project/pyskyrc/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Arlequin-AI/pyskyrc/blob/main/LICENSE)
 [![Tests](https://github.com/Arlequin-AI/pyskyrc/actions/workflows/test.yml/badge.svg)](https://github.com/Arlequin-AI/pyskyrc/actions/workflows/test.yml)
 
 # pyskyrc
