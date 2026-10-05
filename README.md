@@ -1,3 +1,8 @@
+[![PyPI](https://img.shields.io/pypi/v/pyskyrc.svg)](https://pypi.org/project/pyskyrc/)
+[![Python](https://img.shields.io/pypi/pyversions/pyskyrc.svg)](https://pypi.org/project/pyskyrc/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Tests](https://github.com/Arlequin-AI/pyskyrc/actions/workflows/test.yml/badge.svg)](https://github.com/Arlequin-AI/pyskyrc/actions/workflows/test.yml)
+
 # pyskyrc
 
 Pure-Python control and telemetry for **SkyRC Q200neo** / **T1000**
@@ -87,7 +92,10 @@ battery, choosing safe currents, and not leaving charging unattended.
 
 ## License
 
-MIT — see LICENSE.
+MIT License — Copyright (c) 2026 Andreev Ivan.
+
+See [LICENSE](LICENSE) for full text.
+
 ## Author
 
 Andreev Ivan — 2026
