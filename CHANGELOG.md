@@ -2,6 +2,11 @@
 
 All notable changes to `pyskyrc` are documented here.
 
+## [0.2.3] — 2026-10-05
+
+### Fixed
+- README: badge link points to absolute GitHub URL.
+
 ## [0.2.2] — 2026-10-05
 
 ### Fixed
