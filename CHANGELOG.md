@@ -2,6 +2,13 @@
 
 All notable changes to `pyskyrc` are documented here.
 
+## [0.3.1] — 2026-10-07
+
+### Fixed
+- CLI: `--hid` defaults to empty string instead of `/dev/hidraw4`,
+  so USB transport uses cross-platform HIDAPI on Windows/macOS by default.
+- Charger: fall back to HIDAPI if `/dev/hidraw*` path doesn't exist
+  (fixes `AttributeError: module 'os' has no attribute 'O_NONBLOCK'` on Windows).
 
 ## [0.3.1] — 2026-10-07
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os as _os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -71,11 +72,10 @@ class SkyRCCharger:
         poll_ports: tuple[Port, ...] = (Port.A, Port.B, Port.C, Port.D),
     ) -> None:
         if transport == "usb":
-            if path:
-                # явный /dev/hidrawN — старый Linux-путь
+            # legacy /dev/hidraw* — только Linux и только если файл существует
+            if path and _os.path.exists(path):
                 self._device = HIDRawDevice(path)
             else:
-                # автоопределение кроссплатформенно через hidapi
                 self._device = HIDAPIDevice()
         elif transport == "ble":
             self._device = BLEDevice(
