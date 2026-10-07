@@ -2,6 +2,18 @@
 
 All notable changes to `pyskyrc` are documented here.
 
+## [0.3.0] — 2026-10-07
+
+### Added
+- Cross-platform USB HID transport via `hid` (apmorton/hidapi).
+  Now works on Linux, macOS, and Windows.
+- New optional dependency group: `pyskyrc[usb]`.
+- New combined extra: `pyskyrc[all]` (USB + BLE).
+
+### Changed
+- USB transport defaults to HIDAPI when no explicit `/dev/hidraw*` path is given.
+- Legacy `/dev/hidraw*` path still supported for Linux backward compatibility.
+
 ## [0.2.3] — 2026-10-05
 
 ### Fixed

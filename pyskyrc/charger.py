@@ -1,5 +1,3 @@
-"""Высокоуровневый API."""
-
 from __future__ import annotations
 
 import logging
@@ -8,10 +6,11 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from . import protocol, telemetry
-from .device import DEFAULT_PATH, HIDDevice
+from .device import HIDDevice as HIDRawDevice
 from .enums import Chemistry, CycleDirection, Port
 from .exceptions import InvalidParameterError
 from .transport_ble import BLEDevice
+from .transport_hid import HIDAPIDevice
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +63,7 @@ class SkyRCCharger:
 
     def __init__(
         self,
-        path: str = DEFAULT_PATH,
+        path: str = "",
         *,
         transport: str = "usb",
         ble_address: str = "",
@@ -72,7 +71,12 @@ class SkyRCCharger:
         poll_ports: tuple[Port, ...] = (Port.A, Port.B, Port.C, Port.D),
     ) -> None:
         if transport == "usb":
-            self._device = HIDDevice(path)
+            if path:
+                # явный /dev/hidrawN — старый Linux-путь
+                self._device = HIDRawDevice(path)
+            else:
+                # автоопределение кроссплатформенно через hidapi
+                self._device = HIDAPIDevice()
         elif transport == "ble":
             self._device = BLEDevice(
                 address=ble_address,
