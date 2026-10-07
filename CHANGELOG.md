@@ -2,6 +2,13 @@
 
 All notable changes to `pyskyrc` are documented here.
 
+
+## [0.3.1] — 2026-10-07
+
+### Fixed
+ - cli.py: `--hid` default is now empty; USB uses hidapi auto-detect
+   on all platforms. `/dev/hidraw*` still supported when explicitly passed.
+
 ## [0.3.0] — 2026-10-07
 
 ### Added

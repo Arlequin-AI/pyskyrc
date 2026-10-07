@@ -384,10 +384,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "--transport", choices=("usb", "ble"), default="usb",
         help="transport to use (default: usb)",
     )
-    p.add_argument(
-        "--hid", default="/dev/hidraw4",
-        help="path to HID device (USB transport)",
-    )
+    p.add_argument("--hid", default="",
+               help="path to hidraw (Linux only); empty = auto-detect via hidapi")
     p.add_argument(
         "--ble-address", default="",
         help="BLE MAC address (empty = auto-discover by name)",
