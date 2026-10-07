@@ -1,5 +1,10 @@
 """
-Кроссплатформенный HID-транспорт через `hid` (apmorton).
+Кроссплатформенный HID-транспорт.
+
+Поддерживает три совместимых бэкенда модуля `hid`:
+  · pyhidapi      (apmorton)             → hid.Device(path=...)
+  · cython-hidapi (trezor, PyPI: hidapi) → hid.device().open_path(path)
+  · hid           (bishop, PyPI: hid)    → hid.device().open(vid, pid)
 
 Работает на Linux, macOS, Windows.
 Синхронный API: write / read / drain / close.
@@ -9,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import time
+from typing import Any
 
 try:
     import hid
@@ -28,14 +34,52 @@ SKYRC_PRODUCT_HINTS = ("T1000", "Q200neo", "Q200", "Charger")
 REPORT_ID_BYTE = b"\x00"
 
 
+def _open_hid(target: dict) -> Any:
+    """
+    Открывает устройство через тот бэкенд `hid`, который установлен.
+    Возвращает объект с методами write / read / close.
+    """
+    path = target.get("path")
+    vid = target.get("vendor_id")
+    pid = target.get("product_id")
+
+    # 1. pyhidapi (apmorton) — предпочтительный бэкенд, API hid.Device
+    if hasattr(hid, "Device"):
+        try:
+            return hid.Device(path=path)
+        except TypeError:
+            return hid.Device(vid=vid, pid=pid)
+
+    # 2. cython-hidapi (trezor) или bishop's hid — API hid.device
+    if hasattr(hid, "device"):
+        d = hid.device()
+        if hasattr(d, "open_path") and path is not None:
+            d.open_path(path)  # cython-hidapi
+        else:
+            if vid is None or pid is None:
+                raise DeviceIOError(
+                    "Установленный hid (bishop) требует vid/pid; "
+                    "поставьте pyhidapi или hidapi (cython-hidapi)."
+                )
+            d.open(vid, pid)  # hid (bishop)
+        return d
+
+    raise ImportError(
+        "Установленный пакет `hid` не поддерживается. "
+        "Поставьте `pyhidapi` (pip install pyhidapi) "
+        "или `hidapi` (pip install hidapi)."
+    )
+
+
 class HIDAPIDevice:
     """
     Кроссплатформенный HID-транспорт.
 
     Скрывает от вызывающего кода:
-      · поиск устройства по manufacturer/product (VID:PID = 0x0000:0x0001 неинформативны)
+      · поиск устройства по manufacturer/product
       · ведущий report ID = 0x00 при записи
       · обрезание report ID при чтении
+      · различия API трёх разных пакетов `hid`
     """
 
     def __init__(
@@ -46,12 +90,12 @@ class HIDAPIDevice:
     ) -> None:
         if _HID_IMPORT_ERROR is not None:
             raise ImportError(
-                "hid is required for USB transport: pip install hid"
+                "hid is required for USB transport: pip install pyhidapi"
             ) from _HID_IMPORT_ERROR
 
         self._path = path
         self._auto_discover = auto_discover
-        self._device: hid.Device | None = None
+        self._device: Any = None
 
     @property
     def path(self) -> str:
@@ -75,13 +119,18 @@ class HIDAPIDevice:
             )
 
         try:
-            self._device = hid.Device(path=target["path"])
-        except OSError as exc:
+            self._device = _open_hid(target)
+        except (OSError, DeviceIOError) as exc:
             raise DeviceIOError(
-                f"failed to open HID device {target['path']}: {exc}"
+                f"failed to open HID device {target.get('path')}: {exc}"
             ) from exc
 
-        self._path = target["path"].decode() if isinstance(target["path"], bytes) else str(target["path"])
+        raw_path = target.get("path", b"")
+        self._path = (
+            raw_path.decode()
+            if isinstance(raw_path, (bytes, bytearray))
+            else str(raw_path)
+        )
         log.info(
             "USB HID opened: %s %s",
             target.get("manufacturer_string"),
@@ -89,11 +138,10 @@ class HIDAPIDevice:
         )
 
     def _find_device(self) -> dict | None:
-        # если задан явный path — использовать его
         if self._path:
             for d in hid.enumerate():
                 p = d.get("path")
-                p_str = p.decode() if isinstance(p, bytes) else str(p)
+                p_str = p.decode() if isinstance(p, (bytes, bytearray)) else str(p)
                 if p_str == self._path:
                     return d
             return None
@@ -101,8 +149,7 @@ class HIDAPIDevice:
         if not self._auto_discover:
             return None
 
-        # иначе — искать по manufacturer/product
-        candidates = []
+        candidates: list[dict] = []
         for d in hid.enumerate():
             mfg = (d.get("manufacturer_string") or "").strip()
             prod = (d.get("product_string") or "").strip()
@@ -151,19 +198,25 @@ class HIDAPIDevice:
             n = self._device.write(REPORT_ID_BYTE + packet)
         except Exception as exc:
             raise DeviceIOError(f"write failed: {exc}") from exc
-        return n - len(REPORT_ID_BYTE)
+        if n is None:
+            return len(packet)
+        return max(0, n - len(REPORT_ID_BYTE))
 
     def read(self, timeout: float = 0.05) -> bytes | None:
         if self._device is None:
             raise DeviceIOError("HID device is not open")
         timeout_ms = max(1, int(timeout * 1000))
         try:
-            data = self._device.read(REPORT_SIZE, timeout=timeout_ms)
+            # позиционный timeout — совместим со всеми тремя бэкендами
+            data = self._device.read(REPORT_SIZE, timeout_ms)
         except Exception as exc:
             raise DeviceIOError(f"read failed: {exc}") from exc
         if not data:
             return None
-        return bytes(data)
+        if isinstance(data, (bytes, bytearray)):
+            return bytes(data)
+        # cython-hidapi возвращает list[int]
+        return bytes(bytearray(data))
 
     def drain(self, timeout: float = 0.0) -> list[bytes]:
         packets: list[bytes] = []
@@ -171,7 +224,6 @@ class HIDAPIDevice:
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                # мгновенный вычерп
                 while True:
                     pkt = self.read(timeout=0.001)
                     if pkt is None:

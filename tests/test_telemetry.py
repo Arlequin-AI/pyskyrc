@@ -15,11 +15,7 @@ def _pkt(hex_head: str) -> bytes:
 
 def test_parse_telemetry_real_battery():
     # 0f225501 01 000000 00 5acb 023b 00220000 0f23 0f22 0f21 0f1c 0f21 0f22
-    hex_str = (
-        "0f225501" "01" "000000" "00"
-        "5acb" "023b" "00220000"
-        "0f23" "0f22" "0f21" "0f1c" "0f21" "0f22"
-    )
+    hex_str = "0f22550101000000005acb023b002200000f230f220f210f1c0f210f22"
     pkt = _pkt(hex_str)
     info = parse_telemetry(pkt)
     assert info is not None
@@ -33,11 +29,7 @@ def test_parse_telemetry_real_battery():
 
 def test_parse_telemetry_empty():
     # dummy cells = 7,7,7,7,7,7 -> no battery
-    hex_str = (
-        "0f225508" "02" "000000" "00"
-        "0000" "0000" "00000000"
-        "0007" "0007" "0007" "0007" "0007" "0007"
-    )
+    hex_str = "0f22550802000000000000000000000000000700070007000700070007"
     pkt = _pkt(hex_str)
     info = parse_telemetry(pkt)
     assert info is not None

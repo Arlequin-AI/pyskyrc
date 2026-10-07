@@ -37,16 +37,18 @@ class HIDDevice:
     def open(self) -> None:
         if self._fd is not None:
             return
+        if not hasattr(os, "O_NONBLOCK"):
+            raise DeviceIOError(
+                "HIDRawDevice is Linux-only. "
+                "Use auto-detect (no --hid argument) instead."
+            )
         try:
             self._fd = os.open(self._path, os.O_RDWR | os.O_NONBLOCK)
         except FileNotFoundError as exc:
-            raise DeviceNotFoundError(
-                f"HID device not found: {self._path}"
-            ) from exc
+            raise DeviceNotFoundError(f"HID device not found: {self._path}") from exc
         except PermissionError as exc:
             raise DeviceNotFoundError(
-                f"Permission denied: {self._path}. "
-                f"Try: sudo chmod 666 {self._path}"
+                f"Permission denied: {self._path}. Try: sudo chmod 666 {self._path}"
             ) from exc
         except OSError as exc:
             raise DeviceIOError(f"failed to open {self._path}: {exc}") from exc

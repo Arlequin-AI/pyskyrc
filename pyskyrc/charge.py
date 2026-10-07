@@ -28,6 +28,7 @@ ACK_SILENCE_BLE = 0.05
 #  Init handshake
 # ============================================================
 
+
 def init_handshake(dev, verbose: bool = False) -> None:
     """
     Опциональная инициализация: серийник + версия прошивки.
@@ -58,6 +59,7 @@ def init_handshake(dev, verbose: bool = False) -> None:
 #  START / STOP
 # ============================================================
 
+
 def start(
     dev,
     port: Port,
@@ -77,7 +79,8 @@ def start(
         silence = ACK_SILENCE_USB
 
     return _send_and_wait(
-        dev, pkt,
+        dev,
+        pkt,
         expect_cmd=0x05,
         transport=transport,
         ack_silence=silence,
@@ -104,7 +107,8 @@ def stop(
         silence = ACK_SILENCE_USB
 
     return _send_and_wait(
-        dev, pkt,
+        dev,
+        pkt,
         expect_cmd=0xFE,
         transport=transport,
         ack_silence=silence,
@@ -116,6 +120,7 @@ def stop(
 # ============================================================
 #  Internals
 # ============================================================
+
 
 def _send_and_wait(
     dev,
@@ -159,12 +164,8 @@ def _send_and_wait(
         if verbose:
             print(f"  [EVENT] {event.kind.name} {event.port.name}")
 
-        if (
-            expect_cmd == 0x05
-            and event.kind is telemetry.EventKind.START
-        ) or (
-            expect_cmd == 0xFE
-            and event.kind is telemetry.EventKind.STOP
+        if (expect_cmd == 0x05 and event.kind is telemetry.EventKind.START) or (
+            expect_cmd == 0xFE and event.kind is telemetry.EventKind.STOP
         ):
             ack = True
             break

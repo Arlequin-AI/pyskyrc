@@ -56,8 +56,9 @@ async def scan_chargers(
         rssi = adv.rssi if adv.rssi is not None else -999
 
         is_match = not name_hint or name_hint.lower() in name.lower()
-        log.debug("  adv: %s name=%r rssi=%s match=%s",
-                  dev.address, name, rssi, is_match)
+        log.debug(
+            "  adv: %s name=%r rssi=%s match=%s", dev.address, name, rssi, is_match
+        )
 
         if is_match:
             found[dev.address] = ChargerCandidate(
@@ -81,7 +82,6 @@ async def scan_chargers(
 
 def scan_chargers_sync(**kwargs) -> list[ChargerCandidate]:
     return asyncio.run(scan_chargers(**kwargs))
-
 
 
 def list_paired_devices() -> list[tuple[str, str]]:

@@ -28,13 +28,14 @@ from enum import Enum
 from .enums import Port, State
 
 MAX_CELL_SPREAD_MV = 200
-MIN_CELL_MV        = 2500
-MAX_CELL_MV        = 4500
+MIN_CELL_MV = 2500
+MAX_CELL_MV = 4500
 
 
 # ============================================================================
 #  Dataclasses
 # ============================================================================
+
 
 @dataclass(frozen=True, slots=True)
 class PortTelemetry:
@@ -75,6 +76,7 @@ class ChargeEvent:
 #  Helpers
 # ============================================================================
 
+
 def _is_valid_cells(cells: list[int]) -> bool:
     if len(cells) != 6:
         return False
@@ -101,6 +103,7 @@ def _try_state(value: int) -> State:
 #  Parsers
 # ============================================================================
 
+
 def parse_telemetry(packet: bytes) -> PortTelemetry | None:
     """Разобрать 0f2255XX (per-port live telemetry)."""
     if len(packet) < 35:
@@ -112,10 +115,7 @@ def parse_telemetry(packet: bytes) -> PortTelemetry | None:
     if port is None:
         return None
 
-    cells = [
-        (packet[17 + i * 2] << 8) | packet[17 + i * 2 + 1]
-        for i in range(6)
-    ]
+    cells = [(packet[17 + i * 2] << 8) | packet[17 + i * 2 + 1] for i in range(6)]
 
     if _is_valid_cells(cells):
         total = sum(cells)
@@ -156,17 +156,18 @@ def parse_event(packet: bytes) -> ChargeEvent | None:
 
 # ---- совместимость со старым кодом (dict-API) ----
 
+
 def parse_2255(packet: bytes) -> dict | None:
     """Старый dict-API для обратной совместимости."""
     info = parse_telemetry(packet)
     if info is None:
         return None
     return {
-        "port":      info.port.name,
-        "state":     int(info.state),
+        "port": info.port.name,
+        "state": int(info.state),
         "state_str": info.state.name.lower(),
-        "temp_c":    info.temperature_c,
-        "cells_mv":  list(info.cells_mv) if info.cells_mv else [0] * 6,
-        "real":      info.has_battery,
-        "counter":   0,
+        "temp_c": info.temperature_c,
+        "cells_mv": list(info.cells_mv) if info.cells_mv else [0] * 6,
+        "real": info.has_battery,
+        "counter": 0,
     }

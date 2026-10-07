@@ -131,7 +131,7 @@ def test_ble_start():
         discharge_cutoff_mv=3000,
     )
     assert f[0] == 0x0F
-    assert f[1] == len(f) - 2      # LEN = payload + CHK
+    assert f[1] == len(f) - 2  # LEN = payload + CHK
     assert f[-1] == (sum(f[2:-1]) & 0xFF)
 
 
@@ -141,9 +141,7 @@ def test_ble_stop():
 
 
 def test_parse_device_info():
-    pkt = bytes.fromhex(
-        "0f14570100313030313937030000000003390100"
-    )
+    pkt = bytes.fromhex("0f14570100313030313937030000000003390100")
     pkt = pkt + b"\x00" * (64 - len(pkt))
     info = protocol.parse_device_info(pkt)
     assert info is not None

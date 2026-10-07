@@ -24,18 +24,25 @@ from pyskyrc import (
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--ble", action="store_true",
-                   help="use BLE transport instead of USB HID")
-    p.add_argument("--address", default="",
-                   help="BLE MAC address (empty = auto-discover)")
-    p.add_argument("--port", default="B", choices=list("ABCD"),
-                   help="target port (default: B)")
-    p.add_argument("--cells", type=int, default=6,
-                   help="cell count (default: 6)")
-    p.add_argument("--current", type=float, default=1.0,
-                   help="charge current in A (default: 1.0)")
-    p.add_argument("--seconds", type=float, default=30.0,
-                   help="monitor duration before STOP (default: 30)")
+    p.add_argument(
+        "--ble", action="store_true", help="use BLE transport instead of USB HID"
+    )
+    p.add_argument(
+        "--address", default="", help="BLE MAC address (empty = auto-discover)"
+    )
+    p.add_argument(
+        "--port", default="B", choices=list("ABCD"), help="target port (default: B)"
+    )
+    p.add_argument("--cells", type=int, default=6, help="cell count (default: 6)")
+    p.add_argument(
+        "--current", type=float, default=1.0, help="charge current in A (default: 1.0)"
+    )
+    p.add_argument(
+        "--seconds",
+        type=float,
+        default=30.0,
+        help="monitor duration before STOP (default: 30)",
+    )
     args = p.parse_args()
 
     kwargs = {"transport": "ble"} if args.ble else {"transport": "usb"}
@@ -58,8 +65,7 @@ def main() -> None:
         if info:
             print(f"device: {info.serial}  fw {info.version}")
 
-        print(f"START {port.name}: LiPo {args.cells}S "
-              f"BAL.CHG {args.current}A")
+        print(f"START {port.name}: LiPo {args.cells}S BAL.CHG {args.current}A")
         if not charger.start_charge(port, params):
             print("FAIL: no ACK")
             return

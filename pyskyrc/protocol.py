@@ -29,6 +29,7 @@ DEFAULT_TRICKLE_MA: Final = 49
 #  Device info
 # ============================================================================
 
+
 @dataclass(frozen=True, slots=True)
 class DeviceInfo:
     serial: str
@@ -70,6 +71,7 @@ def parse_device_info(packet: bytes) -> DeviceInfo | None:
 #  Checksum (USB)
 # ============================================================================
 
+
 def checksum(packet: bytes) -> int:
     """
     Checksum для USB START-пакетов.
@@ -85,6 +87,7 @@ def checksum(packet: bytes) -> int:
 # ============================================================================
 #  USB: START / STOP
 # ============================================================================
+
 
 def _mode_byte(mode) -> int:
     return int(mode) & 0xFF
@@ -126,12 +129,13 @@ def build_start_packet(
     pkt[6] = _mode_byte(mode)
     pkt[7] = int(round(charge_current_a * 10)) & 0xFF
     pkt[8] = int(round(discharge_current_a * 10)) & 0xFF
-    pkt[9]  = (discharge_cutoff_mv >> 8) & 0xFF
+    pkt[9] = (discharge_cutoff_mv >> 8) & 0xFF
     pkt[10] = discharge_cutoff_mv & 0xFF
     pkt[11] = (charge_cutoff_mv >> 8) & 0xFF
     pkt[12] = charge_cutoff_mv & 0xFF
 
     from .enums import NiMode
+
     if chemistry in (Chemistry.NiMH, Chemistry.NiCd) and mode == int(NiMode.CYCLE):
         pkt[13] = int(cycle_direction) & 0xFF
     else:
@@ -180,6 +184,7 @@ def build_stop_packet(port: Port) -> bytes:
 # ============================================================================
 #  USB: polling frames
 # ============================================================================
+
 
 def _poll_frame(p1: int, p2: int, selector: int) -> bytes:
     pkt = bytearray(REPORT_SIZE)

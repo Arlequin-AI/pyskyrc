@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os as _os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -19,7 +18,7 @@ ACK_TIMEOUT_USB = 5.0
 ACK_TIMEOUT_BLE = 2.0
 ACK_SILENCE_USB = 1.8
 ACK_SILENCE_BLE = 0.05
-POLL_INTERVAL   = 0.25
+POLL_INTERVAL = 0.25
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,9 +37,7 @@ class ChargeParameters:
 
     def __post_init__(self) -> None:
         if not (1 <= self.cells <= 15):
-            raise InvalidParameterError(
-                f"cells must be 1..15, got {self.cells}"
-            )
+            raise InvalidParameterError(f"cells must be 1..15, got {self.cells}")
         if not (0 < self.charge_current_a <= 30):
             raise InvalidParameterError(
                 f"charge_current_a must be in (0, 30], got {self.charge_current_a}"
@@ -71,10 +68,13 @@ class SkyRCCharger:
         ble_name: str = "Charger",
         poll_ports: tuple[Port, ...] = (Port.A, Port.B, Port.C, Port.D),
     ) -> None:
+
         if transport == "usb":
-            # legacy /dev/hidraw* — только Linux и только если файл существует
-            if path and _os.path.exists(path):
+            # 1) явно задан hidraw-путь — это Linux-only сценарий
+            if path:
                 self._device = HIDRawDevice(path)
+            # 2) автоматически: на Linux можно и hidapi (он тоже работает),
+            #    на macOS/Windows — только hidapi
             else:
                 self._device = HIDAPIDevice()
         elif transport == "ble":
@@ -137,9 +137,7 @@ class SkyRCCharger:
             self._device.write(pkt)
             self._stats.packets_sent += 1
             time.sleep(0.004 if self._transport == "usb" else 0.01)
-        return self._device.drain(
-            timeout=0.02 if self._transport == "usb" else 0.05
-        )
+        return self._device.drain(timeout=0.02 if self._transport == "usb" else 0.05)
 
     def poll(self, duration: float = 0.5) -> dict[Port, telemetry.PortTelemetry]:
         deadline = time.monotonic() + duration
@@ -295,9 +293,8 @@ class SkyRCCharger:
             if event is None:
                 continue
 
-            if (
-                (expected_cmd == 0x05 and event.kind is telemetry.EventKind.START)
-                or (expected_cmd == 0xFE and event.kind is telemetry.EventKind.STOP)
+            if (expected_cmd == 0x05 and event.kind is telemetry.EventKind.START) or (
+                expected_cmd == 0xFE and event.kind is telemetry.EventKind.STOP
             ):
                 got_ack = True
                 self._stats.acks += 1

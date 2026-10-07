@@ -14,10 +14,12 @@ from pyskyrc import Port, SkyRCCharger
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--ble", action="store_true",
-                   help="use BLE transport instead of USB HID")
-    p.add_argument("--address", default="",
-                   help="BLE MAC address (empty = auto-discover)")
+    p.add_argument(
+        "--ble", action="store_true", help="use BLE transport instead of USB HID"
+    )
+    p.add_argument(
+        "--address", default="", help="BLE MAC address (empty = auto-discover)"
+    )
     args = p.parse_args()
 
     kwargs = {"transport": "ble"} if args.ble else {"transport": "usb"}

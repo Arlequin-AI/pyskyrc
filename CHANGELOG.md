@@ -2,7 +2,41 @@
 
 All notable changes to `pyskyrc` are documented here.
 
-## [0.3.1] — 2026-10-07
+## [0.3.3] — 2026-10-07
+
+### Fixed
+- **USB transport now works out of the box on Windows, Linux, and macOS.**
+  `HIDAPIDevice` detects which `hid` backend is installed at runtime and
+  adapts accordingly, supporting all three PyPI variants of the module:
+  - `pyhidapi` (apmorton) — `hid.Device(path=...)`
+  - `hidapi` (trezor, cython-hidapi) — `hid.device().open_path(...)`
+  - `hid` (bishop) — `hid.device().open(vid, pid)`
+  Previously the code hard-coded `hid.Device(...)`, which raised
+  `AttributeError: module 'hid' has no attribute 'Device'` on
+  `cython-hidapi` and bishop's `hid`.
+- `read()` now passes the timeout positionally and normalizes the return
+  value to `bytes`, so `cython-hidapi`'s `list[int]` output no longer
+  breaks downstream parsing.
+- `write()` no longer crashes when the backend returns `None` from
+  `write()`; the byte count is derived from the input packet length.
+- `HIDAPIDevice.__init__` no longer imports the wrong annotation
+  `hid.Device | None`, which prevented instantiation on non-pyhidapi
+  installs.
+
+### Changed
+- **`pyproject.toml` extras:**
+  - `usb` now depends on `hidapi>=0.14` (cython-hidapi, wheels for all
+    major platforms) instead of the unrelated `hid>=1.0` package.
+  - `all` updated to `["hidapi>=0.14", "bleak>=0.20"]`.
+- Improved `ImportError` message when no supported `hid` backend is
+  found: `pip install pyhidapi` or `pip install hidapi`.
+
+### Notes
+- Bumped version to `0.3.3` to follow the existing `v0.3.2` tag on
+  GitHub. `0.3.0` in the earlier plan would have shadowed the already
+  published tag.
+
+## [0.3.2] — 2026-10-07
 
 ### Fixed
 - CLI: `--hid` defaults to empty string instead of `/dev/hidraw4`,

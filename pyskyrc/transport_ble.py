@@ -27,13 +27,13 @@ log = logging.getLogger(__name__)
 CHAR_NOTIFY_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb"
 
 # ---- таймауты ----
-SCAN_TIMEOUT    = 30.0
-PROBE_TIMEOUT   = 15.0
-DIRECT_TIMEOUT  = 20.0
+SCAN_TIMEOUT = 30.0
+PROBE_TIMEOUT = 15.0
+DIRECT_TIMEOUT = 20.0
 CONNECT_TIMEOUT = 90.0
 
 # ---- кеш ----
-CACHE_DIR  = Path.home() / ".cache" / "pyskyrc"
+CACHE_DIR = Path.home() / ".cache" / "pyskyrc"
 CACHE_FILE = CACHE_DIR / "last_ble_mac"
 
 
@@ -121,9 +121,7 @@ class BLEDevice:
         if self.debug:
             print(f"  [BLE TX] {packet.hex(' ')}")
         fut = asyncio.run_coroutine_threadsafe(
-            self._client.write_gatt_char(
-                self.char_uuid, packet, response=False
-            ),
+            self._client.write_gatt_char(self.char_uuid, packet, response=False),
             self._loop,
         )
         fut.result(timeout=2.0)
@@ -194,8 +192,7 @@ class BLEDevice:
             if not name and getattr(adv, "local_name", None):
                 name = adv.local_name.strip()
             rssi = adv.rssi if adv.rssi is not None else -999
-            log.debug("  adv: %s name=%r rssi=%s",
-                      dev.address, name, rssi)
+            log.debug("  adv: %s name=%r rssi=%s", dev.address, name, rssi)
 
             if self.name_match.lower() in name.lower():
                 if dev.address not in discovered:
@@ -206,15 +203,11 @@ class BLEDevice:
         try:
             async with BleakScanner(detection_callback=on_detect):
                 try:
-                    await asyncio.wait_for(
-                        found_event.wait(), timeout=SCAN_TIMEOUT
-                    )
+                    await asyncio.wait_for(found_event.wait(), timeout=SCAN_TIMEOUT)
                 except asyncio.TimeoutError:
                     pass
         except Exception as exc:
-            self._error = DeviceIOError(
-                f"BLE scan failed: {type(exc).__name__}: {exc}"
-            )
+            self._error = DeviceIOError(f"BLE scan failed: {type(exc).__name__}: {exc}")
             self._ready.set()
             return
 
@@ -226,18 +219,13 @@ class BLEDevice:
             return
 
         # берём сильнейший
-        addr, (dev, name, rssi) = max(
-            discovered.items(), key=lambda kv: kv[1][2]
-        )
-        log.info("BLE: best candidate: %s %s (rssi=%d)",
-                 addr, name, rssi)
+        addr, (dev, name, rssi) = max(discovered.items(), key=lambda kv: kv[1][2])
+        log.info("BLE: best candidate: %s %s (rssi=%d)", addr, name, rssi)
 
         # ------ Stage 3: connect к device object ------
         client = await self._connect_device(dev)
         if client is None:
-            self._error = DeviceIOError(
-                f"BLE connect failed to {addr}"
-            )
+            self._error = DeviceIOError(f"BLE connect failed to {addr}")
             self._ready.set()
             return
 
@@ -246,9 +234,7 @@ class BLEDevice:
                 await client.disconnect()
             except Exception:
                 pass
-            self._error = DeviceNotFoundError(
-                f"{addr} has no Nordic UART service"
-            )
+            self._error = DeviceNotFoundError(f"{addr} has no Nordic UART service")
             self._ready.set()
             return
 
@@ -266,8 +252,12 @@ class BLEDevice:
             log.debug("BLE: %s connect timeout", mac)
             return None
         except Exception as exc:
-            log.debug("BLE: %s connect error: %s: %s",
-                      mac, type(exc).__name__, exc or "(no message)")
+            log.debug(
+                "BLE: %s connect error: %s: %s",
+                mac,
+                type(exc).__name__,
+                exc or "(no message)",
+            )
             return None
 
         if not await self._is_charger_gatt(client):
@@ -288,9 +278,12 @@ class BLEDevice:
             log.debug("BLE: connect timeout to %s", device.address)
             return None
         except Exception as exc:
-            log.debug("BLE: connect error to %s: %s: %s",
-                      device.address, type(exc).__name__,
-                      exc or "(no message)")
+            log.debug(
+                "BLE: connect error to %s: %s: %s",
+                device.address,
+                type(exc).__name__,
+                exc or "(no message)",
+            )
             return None
         return client
 
@@ -302,8 +295,7 @@ class BLEDevice:
             log.debug("BLE: service discovery failed: %s", exc)
             return False
 
-        log.debug("BLE: %s — %d service(s)",
-                  client.address, len(services))
+        log.debug("BLE: %s — %d service(s)", client.address, len(services))
         for svc in services:
             u = str(svc.uuid).lower()
             log.debug("  svc=%s", u)
@@ -319,9 +311,7 @@ class BLEDevice:
     async def _finish_connect(self, client, mac: str) -> None:
         self._client = client
         try:
-            self.mac_bytes = bytes.fromhex(
-                mac.replace(":", "").replace("-", "")
-            )
+            self.mac_bytes = bytes.fromhex(mac.replace(":", "").replace("-", ""))
         except (ValueError, AttributeError):
             self.mac_bytes = None
 

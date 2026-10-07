@@ -29,8 +29,7 @@ def _make_charger(args: argparse.Namespace) -> SkyRCCharger:
 
 
 def _default_mode(chem: Chemistry) -> int:
-    if chem in (Chemistry.LiPo, Chemistry.LiIo,
-                Chemistry.LiFe, Chemistry.LiHV):
+    if chem in (Chemistry.LiPo, Chemistry.LiIo, Chemistry.LiFe, Chemistry.LiHV):
         return int(LiMode.BALANCE_CHARGE)
     if chem in (Chemistry.NiMH, Chemistry.NiCd):
         return int(NiMode.CHARGE)
@@ -68,6 +67,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
         print(f"     RSSI: {c.rssi} dBm")
         print()
     return 0
+
 
 def cmd_info(args: argparse.Namespace) -> int:
     try:
@@ -151,9 +151,12 @@ def cmd_stop(args: argparse.Namespace) -> int:
     except SkyRCError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
 # ============================================================
 #  Interactive shell
 # ============================================================
+
 
 def cmd_shell(args: argparse.Namespace) -> int:
     """
@@ -299,21 +302,29 @@ def _shell_start(charger: SkyRCCharger, tokens: list[str]) -> None:
     while i < len(tokens):
         t = tokens[i]
         if t in ("--chem", "--chemistry") and i + 1 < len(tokens):
-            chem_name = tokens[i + 1]; i += 2
+            chem_name = tokens[i + 1]
+            i += 2
         elif t == "--cells" and i + 1 < len(tokens):
-            cells = int(tokens[i + 1]); i += 2
+            cells = int(tokens[i + 1])
+            i += 2
         elif t in ("--current", "--charge") and i + 1 < len(tokens):
-            current = float(tokens[i + 1]); i += 2
+            current = float(tokens[i + 1])
+            i += 2
         elif t == "--discharge" and i + 1 < len(tokens):
-            discharge = float(tokens[i + 1]); i += 2
+            discharge = float(tokens[i + 1])
+            i += 2
         elif t == "--chg-cut" and i + 1 < len(tokens):
-            chg_cut = int(tokens[i + 1]); i += 2
+            chg_cut = int(tokens[i + 1])
+            i += 2
         elif t == "--dch-cut" and i + 1 < len(tokens):
-            dch_cut = int(tokens[i + 1]); i += 2
+            dch_cut = int(tokens[i + 1])
+            i += 2
         elif t == "--trickle" and i + 1 < len(tokens):
-            trickle = int(tokens[i + 1]); i += 2
+            trickle = int(tokens[i + 1])
+            i += 2
         elif t == "--mode" and i + 1 < len(tokens):
-            mode_raw = int(tokens[i + 1]); i += 2
+            mode_raw = int(tokens[i + 1])
+            i += 2
         else:
             print(f"unknown option: {t}")
             return
@@ -329,8 +340,7 @@ def _shell_start(charger: SkyRCCharger, tokens: list[str]) -> None:
         return
 
     if mode_raw is None:
-        if chem in (Chemistry.LiPo, Chemistry.LiIo,
-                    Chemistry.LiFe, Chemistry.LiHV):
+        if chem in (Chemistry.LiPo, Chemistry.LiIo, Chemistry.LiFe, Chemistry.LiHV):
             mode_raw = int(LiMode.BALANCE_CHARGE)
         elif chem in (Chemistry.NiMH, Chemistry.NiCd):
             mode_raw = int(NiMode.CHARGE)
@@ -367,35 +377,45 @@ def _shell_stop(charger: SkyRCCharger, tokens: list[str]) -> None:
     ok = charger.stop_charge(port)
     print("OK" if ok else "FAIL: no ACK")
 
+
 # ============================================================
 #  main
 # ============================================================
+
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="pyskyrc",
         description="SkyRC Q200neo / T1000 control and telemetry",
     )
-    p.add_argument("--version", action="version",
-                   version=f"%(prog)s {__version__}")
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     # --- transport flags (глобальные, до подкоманды) ---
     p.add_argument(
-        "--transport", choices=("usb", "ble"), default="usb",
+        "--transport",
+        choices=("usb", "ble"),
+        default="usb",
         help="transport to use (default: usb)",
     )
-    p.add_argument("--hid", default="",
-               help="path to hidraw (Linux only); empty = auto-detect via hidapi")
     p.add_argument(
-        "--ble-address", default="",
+        "--hid",
+        default="",
+        help="path to hidraw (Linux only); empty = auto-detect via hidapi",
+    )
+    p.add_argument(
+        "--ble-address",
+        default="",
         help="BLE MAC address (empty = auto-discover by name)",
     )
     p.add_argument(
-        "--ble-name", default="Charger",
+        "--ble-name",
+        default="Charger",
         help="BLE name substring for auto-discovery (default: Charger)",
     )
     p.add_argument(
-        "-v", "--verbose", action="store_true",
+        "-v",
+        "--verbose",
+        action="store_true",
         help="enable debug logging",
     )
 
@@ -409,32 +429,52 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # monitor
     pm = sub.add_parser("monitor", help="continuous monitoring")
-    pm.add_argument("--interval", type=float, default=0.25,
-                    help="poll interval in seconds (default: 0.25)")
+    pm.add_argument(
+        "--interval",
+        type=float,
+        default=0.25,
+        help="poll interval in seconds (default: 0.25)",
+    )
 
     # start
     ps = sub.add_parser("start", help="start charge on a port")
     ps.add_argument("port", choices=list("ABCDabcd"))
-    ps.add_argument("--chem", default="LiPo",
-                    choices=[c.name for c in Chemistry])
+    ps.add_argument("--chem", default="LiPo", choices=[c.name for c in Chemistry])
     ps.add_argument("--cells", type=int, required=True)
-    ps.add_argument("--mode", type=int,
-                    help="raw mode byte (default: per chemistry)")
-    ps.add_argument("--current", type=float, default=1.0,
-                    help="charge current, A (default: 1.0)")
-    ps.add_argument("--discharge", type=float, default=0.5,
-                    help="discharge current, A (default: 0.5)")
-    ps.add_argument("--chg-cut", type=int, metavar="MV",
-                    help="charge cutoff, mV (default: per chemistry)")
-    ps.add_argument("--dch-cut", type=int, metavar="MV",
-                    help="discharge cutoff, mV (default: per chemistry)")
-    ps.add_argument("--trickle", type=int,
-                    default=protocol.DEFAULT_TRICKLE_MA,
-                    help="trickle current, mA (default: 49)")
-    ps.add_argument("--repeat", type=int, default=0,
-                    help="RE-PEAK repeat count 0..3 (default: 0)")
-    ps.add_argument("--cycles", type=int, default=0,
-                    help="cycle count 0..3 (default: 0)")
+    ps.add_argument("--mode", type=int, help="raw mode byte (default: per chemistry)")
+    ps.add_argument(
+        "--current", type=float, default=1.0, help="charge current, A (default: 1.0)"
+    )
+    ps.add_argument(
+        "--discharge",
+        type=float,
+        default=0.5,
+        help="discharge current, A (default: 0.5)",
+    )
+    ps.add_argument(
+        "--chg-cut",
+        type=int,
+        metavar="MV",
+        help="charge cutoff, mV (default: per chemistry)",
+    )
+    ps.add_argument(
+        "--dch-cut",
+        type=int,
+        metavar="MV",
+        help="discharge cutoff, mV (default: per chemistry)",
+    )
+    ps.add_argument(
+        "--trickle",
+        type=int,
+        default=protocol.DEFAULT_TRICKLE_MA,
+        help="trickle current, mA (default: 49)",
+    )
+    ps.add_argument(
+        "--repeat", type=int, default=0, help="RE-PEAK repeat count 0..3 (default: 0)"
+    )
+    ps.add_argument(
+        "--cycles", type=int, default=0, help="cycle count 0..3 (default: 0)"
+    )
 
     psc = sub.add_parser("scan", help="scan for BLE chargers")
     psc.add_argument("--scan-timeout", type=float, default=6.0)
@@ -472,6 +512,7 @@ def main(argv: list[str] | None = None) -> int:
         "shell": cmd_shell,
     }
     return dispatch[args.cmd](args)
+
 
 if __name__ == "__main__":
     sys.exit(main())
