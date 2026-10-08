@@ -54,10 +54,10 @@ class CycleDirection(IntEnum):
 
 
 class State(IntEnum):
-    OFF = 0x00
+    OFF      = 0x00
     CHARGING = 0x01
-    IDLE = 0x02
-    UNKNOWN = 0x03
+    IDLE     = 0x02
+    READY    = 0x03     # ← новый: battery present, not charging (seen on Windows)
     STARTING = 0x04
 
     @classmethod

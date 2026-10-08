@@ -1,20 +1,15 @@
 """
 Кроссплатформенный HID-транспорт.
 
-Поддерживает три совместимых бэкенда модуля `hid`:
-  · pyhidapi      (apmorton)             → hid.Device(path=...)
-  · cython-hidapi (trezor, PyPI: hidapi) → hid.device().open_path(path)
-  · hid           (bishop, PyPI: hid)    → hid.device().open(vid, pid)
-
-Работает на Linux, macOS, Windows.
-Синхронный API: write / read / drain / close.
+Поддерживает два API под именем `hid`:
+  · apmorton/hid    (Linux, macOS)  — hid.Device(path=...), write требует b"\\x00" + packet
+  · cython-hidapi   (Windows)        — hid.device(), open_path(), write тоже с b"\\x00"
 """
 
 from __future__ import annotations
 
 import logging
 import time
-from typing import Any
 
 try:
     import hid
@@ -24,7 +19,8 @@ except ImportError as exc:
 else:
     _HID_IMPORT_ERROR = None
 
-from .exceptions import DeviceIOError, DeviceNotFoundError
+from .exceptions import DeviceNotFoundError, DeviceIOError
+
 
 log = logging.getLogger(__name__)
 
@@ -33,69 +29,32 @@ SKYRC_MANUFACTURER = "SkyRC"
 SKYRC_PRODUCT_HINTS = ("T1000", "Q200neo", "Q200", "Charger")
 REPORT_ID_BYTE = b"\x00"
 
-
-def _open_hid(target: dict) -> Any:
-    """
-    Открывает устройство через тот бэкенд `hid`, который установлен.
-    Возвращает объект с методами write / read / close.
-    """
-    path = target.get("path")
-    vid = target.get("vendor_id")
-    pid = target.get("product_id")
-
-    # 1. pyhidapi (apmorton) — предпочтительный бэкенд, API hid.Device
-    if hasattr(hid, "Device"):
-        try:
-            return hid.Device(path=path)
-        except TypeError:
-            return hid.Device(vid=vid, pid=pid)
-
-    # 2. cython-hidapi (trezor) или bishop's hid — API hid.device
-    if hasattr(hid, "device"):
-        d = hid.device()
-        if hasattr(d, "open_path") and path is not None:
-            d.open_path(path)  # cython-hidapi
-        else:
-            if vid is None or pid is None:
-                raise DeviceIOError(
-                    "Установленный hid (bishop) требует vid/pid; "
-                    "поставьте pyhidapi или hidapi (cython-hidapi)."
-                )
-            d.open(vid, pid)  # hid (bishop)
-        return d
-
-    raise ImportError(
-        "Установленный пакет `hid` не поддерживается. "
-        "Поставьте `pyhidapi` (pip install pyhidapi) "
-        "или `hidapi` (pip install hidapi)."
-    )
+# Определяем API по наличию символа
+_USE_NEW_API = hid is not None and hasattr(hid, "Device")   # apmorton
+_USE_OLD_API = hid is not None and not _USE_NEW_API and hasattr(hid, "device")  # cython-hidapi
 
 
 class HIDAPIDevice:
     """
-    Кроссплатформенный HID-транспорт.
-
-    Скрывает от вызывающего кода:
-      · поиск устройства по manufacturer/product
-      · ведущий report ID = 0x00 при записи
-      · обрезание report ID при чтении
-      · различия API трёх разных пакетов `hid`
+    Кроссплатформенный HID-транспорт с автоопределением API.
     """
 
-    def __init__(
-        self,
-        path: str = "",
-        *,
-        auto_discover: bool = True,
-    ) -> None:
+    def __init__(self, path: str = "", *, auto_discover: bool = True) -> None:
         if _HID_IMPORT_ERROR is not None:
             raise ImportError(
-                "hid is required for USB transport: pip install pyhidapi"
+                "hid is required for USB transport: "
+                "pip install hid    (or: pip install hidapi on Windows)"
             ) from _HID_IMPORT_ERROR
+
+        if not (_USE_NEW_API or _USE_OLD_API):
+            raise ImportError(
+                "unsupported 'hid' package. Install either "
+                "'hid' (apmorton) or 'hidapi' (cython-hidapi)."
+            )
 
         self._path = path
         self._auto_discover = auto_discover
-        self._device: Any = None
+        self._dev = None
 
     @property
     def path(self) -> str:
@@ -103,34 +62,33 @@ class HIDAPIDevice:
 
     @property
     def is_open(self) -> bool:
-        return self._device is not None
+        return self._dev is not None
 
     # ---- lifecycle ----
 
     def open(self) -> None:
-        if self._device is not None:
+        if self._dev is not None:
             return
 
         target = self._find_device()
         if target is None:
             raise DeviceNotFoundError(
-                "SkyRC charger not found over USB HID. "
-                "Check cable, power, and udev permissions."
+                "SkyRC charger not found over USB HID."
             )
 
         try:
-            self._device = _open_hid(target)
-        except (OSError, DeviceIOError) as exc:
+            if _USE_NEW_API:
+                self._dev = hid.Device(path=target["path"])
+            else:
+                self._dev = hid.device()
+                self._dev.open_path(target["path"])
+        except OSError as exc:
             raise DeviceIOError(
-                f"failed to open HID device {target.get('path')}: {exc}"
+                f"failed to open HID device {target['path']}: {exc}"
             ) from exc
 
-        raw_path = target.get("path", b"")
-        self._path = (
-            raw_path.decode()
-            if isinstance(raw_path, (bytes, bytearray))
-            else str(raw_path)
-        )
+        p = target.get("path")
+        self._path = p.decode(errors="replace") if isinstance(p, bytes) else str(p or "")
         log.info(
             "USB HID opened: %s %s",
             target.get("manufacturer_string"),
@@ -141,7 +99,7 @@ class HIDAPIDevice:
         if self._path:
             for d in hid.enumerate():
                 p = d.get("path")
-                p_str = p.decode() if isinstance(p, (bytes, bytearray)) else str(p)
+                p_str = p.decode(errors="replace") if isinstance(p, bytes) else str(p)
                 if p_str == self._path:
                     return d
             return None
@@ -149,7 +107,7 @@ class HIDAPIDevice:
         if not self._auto_discover:
             return None
 
-        candidates: list[dict] = []
+        candidates = []
         for d in hid.enumerate():
             mfg = (d.get("manufacturer_string") or "").strip()
             prod = (d.get("product_string") or "").strip()
@@ -170,15 +128,15 @@ class HIDAPIDevice:
         return candidates[0]
 
     def close(self) -> None:
-        if self._device is None:
+        if self._dev is None:
             return
         try:
-            self._device.close()
+            self._dev.close()
         except Exception:
             pass
-        self._device = None
+        self._dev = None
 
-    def __enter__(self) -> HIDAPIDevice:
+    def __enter__(self) -> "HIDAPIDevice":
         self.open()
         return self
 
@@ -188,35 +146,36 @@ class HIDAPIDevice:
     # ---- I/O ----
 
     def write(self, packet: bytes) -> int:
-        if self._device is None:
+        if self._dev is None:
             raise DeviceIOError("HID device is not open")
         if len(packet) != REPORT_SIZE:
             raise DeviceIOError(
                 f"packet must be {REPORT_SIZE} bytes, got {len(packet)}"
             )
         try:
-            n = self._device.write(REPORT_ID_BYTE + packet)
+            n = self._dev.write(REPORT_ID_BYTE + packet)
         except Exception as exc:
             raise DeviceIOError(f"write failed: {exc}") from exc
-        if n is None:
-            return len(packet)
-        return max(0, n - len(REPORT_ID_BYTE))
+        # apmorton возвращает число записанных байт (65),
+        # cython-hidapi может вернуть -1 или число (зависит от версии)
+        return n if n > 0 else REPORT_SIZE
 
     def read(self, timeout: float = 0.05) -> bytes | None:
-        if self._device is None:
+        if self._dev is None:
             raise DeviceIOError("HID device is not open")
+
         timeout_ms = max(1, int(timeout * 1000))
         try:
-            # позиционный timeout — совместим со всеми тремя бэкендами
-            data = self._device.read(REPORT_SIZE, timeout_ms)
+            if _USE_NEW_API:
+                data = self._dev.read(REPORT_SIZE, timeout=timeout_ms)
+            else:
+                data = self._dev.read(REPORT_SIZE, timeout_ms)
         except Exception as exc:
             raise DeviceIOError(f"read failed: {exc}") from exc
+
         if not data:
             return None
-        if isinstance(data, (bytes, bytearray)):
-            return bytes(data)
-        # cython-hidapi возвращает list[int]
-        return bytes(bytearray(data))
+        return bytes(data)
 
     def drain(self, timeout: float = 0.0) -> list[bytes]:
         packets: list[bytes] = []

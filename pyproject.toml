@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyskyrc"
-version = "0.3.3"
+version = "0.3.4"
 description = "Pure-Python control and telemetry for SkyRC Q200neo / T1000 chargers via USB HID and BLE"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,9 +33,9 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-usb  = ["pyhidapi>=0.11"]
+usb  = ["hidapi>=0.14"]
 ble  = ["bleak>=0.20"]
-all  = ["pyhidapi>=0.11", "bleak>=0.20"]
+all  = ["hidapi>=0.14", "bleak>=0.20"]
 dev  = ["pytest>=7", "pytest-cov", "ruff>=0.4", "mypy>=1.8", "build", "twine"]
 
 [project.scripts]

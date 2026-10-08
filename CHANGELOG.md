@@ -1,6 +1,21 @@
 # Changelog
 
 All notable changes to `pyskyrc` are documented here.
+## [0.3.4] — 2026-10-08
+
+### Fixed
+- **Windows USB transport now works out of the box.**
+  `transport_hid.py` auto-detects which `hid` backend is installed:
+  `pyhidapi` (`hid.Device`) or `cython-hidapi` (`hid.device().open_path`).
+  Previously hard-coded `hid.Device` raised `AttributeError` on Windows.
+- `pyproject.toml`: extras `usb` / `all` no longer pull the nonexistent
+  `pyhidapi>=0.11`; now depend on `hidapi>=0.14` (cython-hidapi / trezor).
+- `read()` normalizes `list[int]` → `bytes` for cython-hidapi.
+- `write()` handles `-1` / `None` return values from cython-hidapi.
+
+### Verified
+- USB HID on Windows 11 (Python 3.14, hidapi 0.15.0) — SkyRC T1000 Maestro.
+- BLE on Windows 11 (bleak 3.0.2, WinRT backend) — same device.
 
 ## [0.3.3] — 2026-10-07
 
