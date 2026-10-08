@@ -19,8 +19,7 @@ except ImportError as exc:
 else:
     _HID_IMPORT_ERROR = None
 
-from .exceptions import DeviceNotFoundError, DeviceIOError
-
+from .exceptions import DeviceIOError, DeviceNotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +29,10 @@ SKYRC_PRODUCT_HINTS = ("T1000", "Q200neo", "Q200", "Charger")
 REPORT_ID_BYTE = b"\x00"
 
 # Определяем API по наличию символа
-_USE_NEW_API = hid is not None and hasattr(hid, "Device")   # apmorton
-_USE_OLD_API = hid is not None and not _USE_NEW_API and hasattr(hid, "device")  # cython-hidapi
+_USE_NEW_API = hid is not None and hasattr(hid, "Device")  # apmorton
+_USE_OLD_API = (
+    hid is not None and not _USE_NEW_API and hasattr(hid, "device")
+)  # cython-hidapi
 
 
 class HIDAPIDevice:
@@ -72,9 +73,7 @@ class HIDAPIDevice:
 
         target = self._find_device()
         if target is None:
-            raise DeviceNotFoundError(
-                "SkyRC charger not found over USB HID."
-            )
+            raise DeviceNotFoundError("SkyRC charger not found over USB HID.")
 
         try:
             if _USE_NEW_API:
@@ -88,7 +87,9 @@ class HIDAPIDevice:
             ) from exc
 
         p = target.get("path")
-        self._path = p.decode(errors="replace") if isinstance(p, bytes) else str(p or "")
+        self._path = (
+            p.decode(errors="replace") if isinstance(p, bytes) else str(p or "")
+        )
         log.info(
             "USB HID opened: %s %s",
             target.get("manufacturer_string"),
@@ -136,7 +137,7 @@ class HIDAPIDevice:
             pass
         self._dev = None
 
-    def __enter__(self) -> "HIDAPIDevice":
+    def __enter__(self) -> HIDAPIDevice:
         self.open()
         return self
 
