@@ -26,8 +26,9 @@ protocol. **No Charge Master or SkyRC app required.**
 ## Install
 
     pip install pyskyrc
-    pip install pyskyrc[ble]
-    pip install pyskyrc[ble,dev]
+    pip install "pyskyrc[ble]"
+    pip install "pyskyrc[dev]"
+    pip install "pyskyrc[all]"
 
 ## CLI
 
